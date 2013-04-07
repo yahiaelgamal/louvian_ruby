@@ -1,4 +1,4 @@
-class Community
+class Louvian::Community
   attr_accessor :in, :tot, :nodes_ids, :id
   @@count = 0
   def initialize node_id
@@ -7,6 +7,10 @@ class Community
     @nodes_ids = [node_id]
     @in = 0 # sum of links weights inside the community
     @tot = Louvian.get_adj(node_id).count # sum of links weights incident to the community
+  end
+
+  def self.reset
+    @@count = 0
   end
 
   def insert node, links_to_comm
