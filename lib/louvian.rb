@@ -39,7 +39,7 @@ module Louvian
 
   def self.display_metas
     @@meta_nodes.each do |m|
-      puts "#{m.id} => #{m.nodes_ids}"
+      puts "#{m.id} => #{m.nodes_ids} in=#{m.in} tot=#{m.tot}"
     end
   end
   def self.init_env string
@@ -87,7 +87,10 @@ module Louvian
     m2 = @@total_weight
 
     #puts "\t\t\tcomm #{meta_node.id} #{[tot, deg, m2, nb_links_to_comm]}"
+    # what makes sense
     return (nb_links_to_comm.to_f/m2) - (tot * deg.to_f/m2**2/2)
+
+    # copied from the cpp code
     #return nb_links_to_comm.to_f - tot*deg.to_f/m2
   end
 
@@ -105,13 +108,18 @@ module Louvian
       nb_moves = 0
       nb_passes += 1
       @@nodes.shuffle.each do |node|
-        puts "\tconsidering node #{node}"
+        #puts "\tconsidering node #{node}"
         orig_meta_node_id = @@n2c[node]
         orig_meta_node = @@meta_nodes.find {|i| i.id == orig_meta_node_id}
         node_to_comms_links = self.get_node_to_comms_links node
         neighbour_meta_nodes = @@meta_nodes.find_all {|i| node_to_comms_links.include? i.id}
 
         orig_meta_node.remove node, node_to_comms_links[orig_meta_node_id]
+        if  orig_meta_node.nodes_ids.empty?
+          @@meta_nodes.delete orig_meta_node
+        end
+
+
         best_meta_id = orig_meta_node_id
         max_gain = 0.0
 
@@ -128,11 +136,12 @@ module Louvian
         end
 
         best_meta = @@meta_nodes.find{|m| m.id == best_meta_id}
-        puts "\t\tbest comm #{best_meta.id}"
+        #puts "\t\tbest comm #{best_meta.id}"
 
         best_meta.insert node, node_to_comms_links[best_meta.id]
         @@n2c[node] = best_meta_id
       end
+      display_metas
       puts "modularity is #{self.modularity}"
     end while  nb_moves > 0
   end
@@ -156,22 +165,35 @@ module Louvian
       #@nodes_ids = [trust_node.id]
       @nodes_ids = [node_id]
       @in = 0 # sum of links weights inside the community
-      #@tot = trust_node.symmetric_links # sum of links weights incident to the community
+
+      # what makes sense
       @tot = Louvian.get_adj(node_id).count # sum of links weights incident to the community
     end
 
     def insert node, links_to_comm
       puts "\t\tinsert node #{node} to comm #{@id}"
       @nodes_ids << node
-      @in += links_to_comm
-      @tot += Louvian.get_adj(node).count - links_to_comm
+
+      # what makes sense
+      #@in += links_to_comm
+      #@tot += (Louvian.get_adj(node).count - links_to_comm)
+
+      # Copied from the cpp code
+      @in += 2*links_to_comm
+      @tot += (Louvian.get_adj(node).count)
     end
 
     def remove node, links_to_comm
-      puts "\t\tremove node #{node} to comm #{@id}"
+      #puts "\t\tremove node #{node} to comm #{@id}"
       @nodes_ids.delete node
-      @in -= links_to_comm
-      @tot -= Louvian.get_adj(node).count - links_to_comm
+
+      # what makes sense
+      #@in -= links_to_comm
+      #@tot -= (Louvian.get_adj(node).count - links_to_comm)
+
+      # Copied from the cpp code
+      @in -= 2*links_to_comm
+      @tot -= (Louvian.get_adj(node).count)
     end
 
   end
@@ -188,3 +210,5 @@ s='0 1
 5 7'
 
 Louvian.init_env s 
+Louvian.iterate
+Louvian.display_metas
