@@ -9,32 +9,8 @@ module Louvian
 
   @@total_weight = 0.0
 
-  def self.adj
-    @@adj
-  end
-
-  def self.n2c
-    @@n2c
-  end
-
   def self.communities
     @@communities
-  end
-
-  def self.nodes
-    @@nodes
-  end
-
-  def self.find_m id
-    @@communities.find {|i| i.id == id}
-  end
-
-  def self.find_all_m ids
-    @@communities.find_all {|i| ids.include? i.id}
-  end
-
-  def self.find_n id
-    @@nodes.find {|i| i.id == id}
   end
 
   def self.display_communities
@@ -42,6 +18,7 @@ module Louvian
       puts "#{m.id} => #{m.nodes_ids} in=#{m.in} tot=#{m.tot}"
     end
   end
+
   def self.init_env string
     make_adj string
     @@nodes = @@adj.keys.sort
@@ -71,8 +48,6 @@ module Louvian
 
   def self.modularity
     q = 0.0
-    # m is the sum of weights in the set of nodes
-    #m2 = communities.sum{|m_node| m_node.symmetric_links.count}
     m2 = @@total_weight
 
     @@communities.each do |m_node|
@@ -162,11 +137,8 @@ module Louvian
     def initialize node_id
       @id = @@count
       @@count+=1
-      #@nodes_ids = [trust_node.id]
       @nodes_ids = [node_id]
       @in = 0 # sum of links weights inside the community
-
-      # what makes sense
       @tot = Louvian.get_adj(node_id).count # sum of links weights incident to the community
     end
 
