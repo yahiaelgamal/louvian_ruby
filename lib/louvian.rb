@@ -4,7 +4,7 @@ module Louvian
 
   @@adj={}
 
-  @@meta_nodes = []
+  @@communities = []
   @@nodes = []
 
   @@total_weight = 0.0
@@ -17,8 +17,8 @@ module Louvian
     @@n2c
   end
 
-  def self.meta_nodes
-    @@meta_nodes
+  def self.communities
+    @@communities
   end
 
   def self.nodes
@@ -26,19 +26,19 @@ module Louvian
   end
 
   def self.find_m id
-    @@meta_nodes.find {|i| i.id == id}
+    @@communities.find {|i| i.id == id}
   end
 
   def self.find_all_m ids
-    @@meta_nodes.find_all {|i| ids.include? i.id}
+    @@communities.find_all {|i| ids.include? i.id}
   end
 
   def self.find_n id
     @@nodes.find {|i| i.id == id}
   end
 
-  def self.display_metas
-    @@meta_nodes.each do |m|
+  def self.display_communities
+    @@communities.each do |m|
       puts "#{m.id} => #{m.nodes_ids} in=#{m.in} tot=#{m.tot}"
     end
   end
@@ -46,8 +46,8 @@ module Louvian
     make_adj string
     @@nodes = @@adj.keys.sort
     @@nodes.each do |k,v|
-      @@meta_nodes << MetaNode.new(k)
-      @@n2c[k] = @@meta_nodes.last.id
+      @@communities << Community.new(k)
+      @@n2c[k] = @@communities.last.id
     end
    @@total_weight = adj.inject(0) {|r,(k,v)| r+v.count}
 
@@ -72,21 +72,21 @@ module Louvian
   def self.modularity
     q = 0.0
     # m is the sum of weights in the set of nodes
-    #m2 = meta_nodes.sum{|m_node| m_node.symmetric_links.count}
+    #m2 = communities.sum{|m_node| m_node.symmetric_links.count}
     m2 = @@total_weight
 
-    @@meta_nodes.each do |m_node|
+    @@communities.each do |m_node|
       q += m_node.in.to_f/m2 - (m_node.tot.to_f/m2 * m_node.tot.to_f/m2)
     end
     return q
   end
 
-  def self.modularity_gain node, meta_node, nb_links_to_comm
-    tot = meta_node.tot
+  def self.modularity_gain node, community, nb_links_to_comm
+    tot = community.tot
     deg = get_adj(node).count
     m2 = @@total_weight
 
-    #puts "\t\t\tcomm #{meta_node.id} #{[tot, deg, m2, nb_links_to_comm]}"
+    #puts "\t\t\tcomm #{community.id} #{[tot, deg, m2, nb_links_to_comm]}"
     # what makes sense
     return (nb_links_to_comm.to_f/m2) - (tot * deg.to_f/m2**2/2)
 
@@ -102,46 +102,46 @@ module Louvian
     nb_passes = 0
     max_passes = 10
     begin
-      puts "Iterating"
-      puts "modularity is #{self.modularity}"
+      #puts "Iterating"
+      #puts "modularity is #{self.modularity}"
       cur_mod = new_mod
       nb_moves = 0
       nb_passes += 1
       @@nodes.shuffle.each do |node|
         #puts "\tconsidering node #{node}"
-        orig_meta_node_id = @@n2c[node]
-        orig_meta_node = @@meta_nodes.find {|i| i.id == orig_meta_node_id}
+        orig_community_id = @@n2c[node]
+        orig_community = @@communities.find {|i| i.id == orig_community_id}
         node_to_comms_links = self.get_node_to_comms_links node
-        neighbour_meta_nodes = @@meta_nodes.find_all {|i| node_to_comms_links.include? i.id}
+        neighbour_communities = @@communities.find_all {|i| node_to_comms_links.include? i.id}
 
-        orig_meta_node.remove node, node_to_comms_links[orig_meta_node_id]
-        if  orig_meta_node.nodes_ids.empty?
-          @@meta_nodes.delete orig_meta_node
+        orig_community.remove node, node_to_comms_links[orig_community_id]
+        if  orig_community.nodes_ids.empty?
+          @@communities.delete orig_community
         end
 
 
-        best_meta_id = orig_meta_node_id
+        best_community_id = orig_community_id
         max_gain = 0.0
 
-        neighbour_meta_nodes.each do |m_node|
+        neighbour_communities.each do |m_node|
           mod_gain = self.modularity_gain(node, m_node, node_to_comms_links[m_node.id])
           #puts "\t\tfor comm #{m_node.id} mod increase is #{mod_gain}"
           if mod_gain > max_gain
             max_gain = mod_gain
-            best_meta_id = m_node.id
+            best_community_id = m_node.id
           end
         end
-        if best_meta_id != orig_meta_node_id
+        if best_community_id != orig_community_id
           nb_moves += 1
         end
 
-        best_meta = @@meta_nodes.find{|m| m.id == best_meta_id}
-        #puts "\t\tbest comm #{best_meta.id}"
+        best_community = @@communities.find{|m| m.id == best_community_id}
+        #puts "\t\tbest comm #{best_community.id}"
 
-        best_meta.insert node, node_to_comms_links[best_meta.id]
-        @@n2c[node] = best_meta_id
+        best_community.insert node, node_to_comms_links[best_community.id]
+        @@n2c[node] = best_community_id
       end
-      display_metas
+      display_comms
       puts "modularity is #{self.modularity}"
     end while  nb_moves > 0
   end
@@ -156,7 +156,7 @@ module Louvian
     return node_to_comms_links
   end
 
-  class MetaNode
+  class Community
     attr_accessor :in, :tot, :nodes_ids, :id
     @@count = 0
     def initialize node_id
@@ -171,7 +171,7 @@ module Louvian
     end
 
     def insert node, links_to_comm
-      puts "\t\tinsert node #{node} to comm #{@id}"
+      #puts "\t\tinsert node #{node} to comm #{@id}"
       @nodes_ids << node
 
       # what makes sense
@@ -200,6 +200,7 @@ module Louvian
 end
 s='0 1
 0 8
+1 3
 1 4
 1 8
 2 3
@@ -211,4 +212,4 @@ s='0 1
 
 Louvian.init_env s 
 Louvian.iterate
-Louvian.display_metas
+Louvian.display_communities
