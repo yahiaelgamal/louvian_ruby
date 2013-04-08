@@ -2,6 +2,8 @@ require 'set'
 module Louvian
   require 'louvian/community'
 
+  MIN_INCREASE = 0.000001
+
   # Node => community
   @@n2c = {}
 
@@ -119,8 +121,9 @@ module Louvian
         end
       end
       display_communities
+      new_mod = self.modularity
       puts "modularity is #{self.modularity}"
-    end while  nb_moves > 0
+    end while  nb_moves > 0 and new_mod - cur_mod >= MIN_INCREASE
   end
 
   private
@@ -152,10 +155,10 @@ module Louvian
 
     #puts "\t\t\tcomm #{community.id} #{[tot, deg, m2, nb_links_to_comm]}"
     # what makes sense
-    return (nb_links_to_comm.to_f/m2) - (tot * deg.to_f/m2**2/2)
+    #return (nb_links_to_comm.to_f/m2) - (tot * deg.to_f/m2**2/2)
 
     # copied from the cpp code
-    #return nb_links_to_comm.to_f - tot*deg.to_f/m2
+    return nb_links_to_comm.to_f - tot*deg.to_f/m2
   end
 
   # This method gets all neighbour communities and the number of links from +node+

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'louvian_ruby'
-  s.version     = '0.0.0'
+  s.version     = '0.0.2'
   s.date        = '2012-04-03'
   s.summary     = "Louvian wrapper"
   s.description = "Ruby implementation of Louvian community detection algorithim"
