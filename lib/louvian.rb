@@ -91,9 +91,6 @@ module Louvian
         neighbour_communities = @@communities.find_all {|i| node_to_comms_links.include? i.id}
 
         orig_community.remove node, node_to_comms_links[orig_community_id]
-        if  orig_community.nodes_ids.empty?
-          @@communities.delete orig_community
-        end
 
 
         best_community_id = orig_community_id
@@ -116,6 +113,10 @@ module Louvian
 
         best_community.insert node, node_to_comms_links[best_community.id]
         @@n2c[node] = best_community_id
+
+        if  orig_community.nodes_ids.empty?
+          @@communities.delete orig_community
+        end
       end
       display_communities
       puts "modularity is #{self.modularity}"
