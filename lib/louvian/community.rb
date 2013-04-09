@@ -1,13 +1,17 @@
 class Louvian::Community
   attr_accessor :in, :tot, :nodes_ids, :id
   @@count = 0
-  def initialize node_id
+  def initialize adj_list
     @id = @@count
     @@count+=1
-    @nodes_ids = [node_id]
-    @in = 0 # sum of links weights inside the community
-    @tot = Louvian.get_adj(node_id).count # sum of links weights incident to the community
-  end
+    @nodes_ids = [adj_list.keys]
+
+    # sum of links weights inside the community
+    @in = adj_list.select {|k,v| nodes_ids.include? k}.inject(0) {|r,(k,v)| r+v.count}
+
+    # sum of links weights incident to the community
+    @tot = adj_list.inject(0) {|r,(k,v)| r+v.count}
+  end 
 
   def self.reset
     @@count = 0
