@@ -1,6 +1,6 @@
 class Louvian::Graph
 
-  attr_accessor :adj_list, :nodes, :communities, :directed, :n2c, :total_weight
+  attr_accessor :adj_list, :nodes, :communities, :directed, :n2c, :total_weight, :level
   def initialize edges_list, directed, level
     # Adjacency list
     @adj_list = Louvian::Graph.make_adj edges_list, directed
@@ -155,5 +155,20 @@ class Louvian::Graph
       end
     end
     return Louvian::Graph.new comm_edges, directed, @level+1
+  end
+
+  def expand! lower_graph
+    comm_2_nodes = lower_graph.communities.inject({}) {|r,comm| r[comm.id]= comm.nodes_ids;r}
+    @communities.each do |comm|
+      new_nodes = []
+      comm.nodes_ids.each do |node|
+        new_nodes += comm_2_nodes[node]
+        comm_2_nodes[node].each do |low_node|
+          @n2c[low_node] = comm.id
+        end
+      end
+      comm.nodes_ids = new_nodes
+    end
+
   end
 end

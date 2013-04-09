@@ -33,6 +33,12 @@ module Louvian
     end while self.one_level
   end
 
+  def self.unfold_levels!
+    levels[(2..-1)].each_with_index do |graph, i|
+      graph.expand! levels[i-1]
+    end
+  end
+
   # This method iterates over the graph to optimze the modularity. Iterations
   # stops when there are no possible moves anymore.
   # @returns improvement [Boolean] indicates whether there was improvment or no
