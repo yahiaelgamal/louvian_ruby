@@ -2,12 +2,22 @@ class Louvian::Community
   attr_accessor :in, :tot, :nodes_ids, :id
   @@count = 0
   def initialize adj_list
+    puts "Adj list is "
+    p adj_list
     @id = @@count
     @@count+=1
-    @nodes_ids = [adj_list.keys]
+
+    # TODO NO NEED TO SORT
+    @nodes_ids = adj_list.keys.sort
+    p @nodes_ids 
 
     # sum of links weights inside the community
-    @in = adj_list.select {|k,v| nodes_ids.include? k}.inject(0) {|r,(k,v)| r+v.count}
+    #@in = adj_list.select {|k,v| nodes_ids.include? k}.inject(0) {|r,(k,v)| r+v.count}
+
+    @in = 0
+    adj_list.each do |node, neighbors|
+      @in += neighbors.select {|node| @nodes_ids.include? node}.count
+    end
 
     # sum of links weights incident to the community
     @tot = adj_list.inject(0) {|r,(k,v)| r+v.count}
@@ -17,7 +27,7 @@ class Louvian::Community
     @@count = 0
   end
 
-  def insert node, links_to_comm
+  def insert node, node_adj
     #puts "\t\tinsert node #{node} to comm #{@id}"
     @nodes_ids << node
 
@@ -25,12 +35,13 @@ class Louvian::Community
     #@in += links_to_comm
     #@tot += (Louvian.get_adj(node).count - links_to_comm)
 
+    links_to_comm = node_adj.select {|n| nodes_ids.include? n}.count
     # Copied from the cpp code
     @in += 2*links_to_comm
-    @tot += (Louvian.get_adj(node).count)
+    @tot += node_adj.count
   end
 
-  def remove node, links_to_comm
+  def remove node, node_adj
     #puts "\t\tremove node #{node} to comm #{@id}"
     @nodes_ids.delete node
 
@@ -38,9 +49,10 @@ class Louvian::Community
     #@in -= links_to_comm
     #@tot -= (Louvian.get_adj(node).count - links_to_comm)
 
+    links_to_comm = node_adj.select {|n| nodes_ids.include? n}.count
     # Copied from the cpp code
     @in -= 2*links_to_comm
-    @tot -= (Louvian.get_adj(node).count)
+    @tot -= node_adj.count
   end
 
 end

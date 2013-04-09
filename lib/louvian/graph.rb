@@ -2,11 +2,11 @@ class Louvian::Graph
 
   attr_accessor :adj_list, :nodes, :communities, :directed, :n2c, :total_weight
   def initialize edges_list, directed
-
     # Adjacency list
     @adj_list = Louvian::Graph.make_adj edges_list, directed
 
     # List of all nodes
+    # TODO remove sort
     @nodes = @adj_list.keys.sort
 
     # List of all communities (meta_nodes)
@@ -18,8 +18,9 @@ class Louvian::Graph
     # node_id => community_id
     @n2c = {}
 
-    @adj_list.each do |k, v|
-      @communities << Louvian::Community.new({k: v})
+    # TODO remove sort
+    @adj_list.sort.each do |k, v|
+      @communities << Louvian::Community.new({k => v})
       @n2c[k] = @communities.last.id
     end
 
@@ -45,7 +46,7 @@ class Louvian::Graph
   end
 
   def get_neighbour_nodes node
-    neighbour = adj_list[node]
+    neighbours = adj_list[node]
   end
 
   def get_neighbour_comms node
@@ -69,10 +70,11 @@ class Louvian::Graph
     neighbour_nodes.each do |n|
       node_to_comms_links[@n2c[n]] = (node_to_comms_links[@n2c[n]] || 0) + 1
     end
-    node_to_comms_links[@n2c[node]] ||= 1
+    node_to_comms_links[@n2c[node]] ||= 0
     return node_to_comms_links
   end
 
+  # OPTIMIZE
   def get_number_of_links from_node, to_comm
     get_node_to_comms_links(from_node)[to_comm.id]
   end
@@ -95,9 +97,9 @@ class Louvian::Graph
   # @param nb_links_to_comm is the number of links from +node+ to community
   # @returns delta_q (the gain of modularity)
   def modularity_gain node, community
-    nb_links_to_comm = 
+    nb_links_to_comm = get_number_of_links node, community
     tot = community.tot
-    deg = get_adj(node).count
+    deg = @adj_list[node].count
     m2 = @total_weight
 
     #puts "\t\t\tcomm #{community.id} #{[tot, deg, m2, nb_links_to_comm]}"
@@ -106,5 +108,28 @@ class Louvian::Graph
 
     # copied from the cpp code
     return nb_links_to_comm.to_f - tot*deg.to_f/m2
+  end
+
+  # This method outputs information about communities
+  def display_communities
+    @communities.each do |m|
+      puts "#{m.id} => #{m.nodes_ids} in=#{m.in} tot=#{m.tot}"
+    end
+  end
+
+  def insert_node node, comm
+    comm.insert node, @adj_list[node]
+    @n2c[node] = comm.id
+  end
+
+  def remove_node node, comm
+    comm.remove node, @adj_list[node]
+    @n2c[node] = -1
+  end
+
+  def garbage_collect community
+    if  community.nodes_ids.empty?
+      @communities.delete community
+    end
   end
 end
