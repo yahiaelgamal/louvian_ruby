@@ -1,7 +1,7 @@
 class Louvian::Graph
 
   attr_accessor :adj_list, :nodes, :communities, :directed, :n2c, :total_weight
-  def initialize edges_list, directed
+  def initialize edges_list, directed, level
     # Adjacency list
     @adj_list = Louvian::Graph.make_adj edges_list, directed
 
@@ -18,9 +18,10 @@ class Louvian::Graph
     # node_id => community_id
     @n2c = {}
 
+    @level = level
     # TODO remove sort
     @adj_list.sort.each do |k, v|
-      @communities << Louvian::Community.new({k => v})
+      @communities << Louvian::Community.new({k => v}, @level)
       @n2c[k] = @communities.last.id
     end
 
@@ -115,6 +116,7 @@ class Louvian::Graph
     @communities.each do |m|
       puts "#{m.id} => #{m.nodes_ids} in=#{m.in} tot=#{m.tot}"
     end
+    nil
   end
 
   def insert_node node, comm
@@ -131,5 +133,27 @@ class Louvian::Graph
     if  community.nodes_ids.empty?
       @communities.delete community
     end
+  end
+
+  def build_graph_from_comms
+
+    comm_edges = []
+
+    count = @communities.count
+    if not directed # iterate only on one half of communities
+      count % 2 == 0 ?  count : count + 1
+      count /=2
+    end
+
+    @communities[0,count].each do |comm|
+      comm.nodes_ids.each do |node|
+        @adj_list[node].each do |linked_node|
+          if not comm.nodes_ids.include? linked_node
+            comm_edges << [comm.id, @n2c[linked_node]]
+          end
+        end
+      end
+    end
+    return Louvian::Graph.new comm_edges, directed, @level+1
   end
 end

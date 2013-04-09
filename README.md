@@ -33,11 +33,13 @@ or
     3 8
     5 6
     5 7'
-
-    Louvian.init_env edges
-    Louvian.iterate
-    communities_hash = Louvian.communities
-    Louvian.display_communities
-    Louvian.reset
+    
+    directed_graph = false
+    Louvian.init_env edges, directed_graph 
+    Louvian.run
+    # After run, the Louvian.levels array will have a graph for each leve
+    # You can use graph.display_communities for a user friendly output
+    Louvian.levels.last.display_communities
+    
 
 

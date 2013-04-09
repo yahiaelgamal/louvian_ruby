@@ -1,15 +1,14 @@
 class Louvian::Community
   attr_accessor :in, :tot, :nodes_ids, :id
   @@count = 0
-  def initialize adj_list
-    puts "Adj list is "
-    p adj_list
+  def initialize adj_list, level
+    #puts "Adj list is "
     @id = @@count
     @@count+=1
 
     # TODO NO NEED TO SORT
     @nodes_ids = adj_list.keys.sort
-    p @nodes_ids 
+    @level = level
 
     # sum of links weights inside the community
     #@in = adj_list.select {|k,v| nodes_ids.include? k}.inject(0) {|r,(k,v)| r+v.count}
@@ -21,7 +20,7 @@ class Louvian::Community
 
     # sum of links weights incident to the community
     @tot = adj_list.inject(0) {|r,(k,v)| r+v.count}
-  end 
+  end
 
   def self.reset
     @@count = 0
