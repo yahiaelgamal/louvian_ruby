@@ -15,43 +15,40 @@ class Louvian::Community
 
     @in = 0
     adj_list.each do |node, neighbors|
-      @in += neighbors.select {|node| @nodes_ids.include? node}.count
+      @in += neighbors.select {|node| @nodes_ids.include? node}.values.inject(0,:+)
     end
 
-    # sum of links weights incident to the community
-    @tot = adj_list.inject(0) {|r,(k,v)| r+v.count}
+    # sum of links weights inside the community
+    @tot = 0
+    adj_list.each do |node, links|
+      @tot += links.values.inject(0, :+)
+    end
+
   end
 
   def self.reset
     @@count = 0
   end
 
-  def insert node, node_adj
-    #puts "\t\tinsert node #{node} to comm #{@id}"
+  def insert node, node_adj, links_from_community
+    links_to_comm = node_adj.select {|n| @nodes_ids.include? n}.values.inject(0,:+)
+
     @nodes_ids << node
-
-    # what makes sense
-    #@in += links_to_comm
-    #@tot += (Louvian.get_adj(node).count - links_to_comm)
-
-    links_to_comm = node_adj.select {|n| nodes_ids.include? n}.count
     # Copied from the cpp code
-    @in += 2*links_to_comm
-    @tot += node_adj.count
+    @in += links_to_comm + links_from_community + (node_adj[node] || 0)
+    @tot += node_adj.values.inject(0,:+)
+
   end
 
-  def remove node, node_adj
-    #puts "\t\tremove node #{node} to comm #{@id}"
+  def remove node, node_adj, links_from_community
     @nodes_ids.delete node
+    links_to_comm = node_adj.select {|n| @nodes_ids.include? n}.values.inject(0,:+)
 
-    # what makes sense
-    #@in -= links_to_comm
-    #@tot -= (Louvian.get_adj(node).count - links_to_comm)
-
-    links_to_comm = node_adj.select {|n| nodes_ids.include? n}.count
+    #puts "linksto t-com  #{links_to_comm}"
     # Copied from the cpp code
-    @in -= 2*links_to_comm
-    @tot -= node_adj.count
+    @in -= (links_to_comm + links_from_community + (node_adj[node] || 0))
+    @tot -= node_adj.values.inject(0,:+)
+
   end
 
 end

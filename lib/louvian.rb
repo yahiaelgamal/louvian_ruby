@@ -16,6 +16,10 @@ module Louvian
   def self.levels
     @@levels
   end
+
+  def self.levels= value
+    @@levels = value
+  end
   # This method sets up the whole environemnt for calculations
   #
   # @param string [String] in the form of src dest (one edge per line)
@@ -28,13 +32,16 @@ module Louvian
 
   def self.run
     l = 0
-    mod = @@graph.modularity
-    begin
+    puts "Level #{l}: Comms #{@@graph.communities.size}"
+    l +=1
+
+    while self.one_level
       puts "Level #{l}: Comms #{@@graph.communities.size}"
       @@levels << @@graph
       @@graph = @@graph.build_graph_from_comms
+
       l+=1
-    end while self.one_level
+    end
   end
 
   def self.unfold_levels!
@@ -47,7 +54,7 @@ module Louvian
     @@levels.each do |graph|
       puts "level #{graph.level}: Nodes #{graph.communities.count}"
     end
-
+    nil
   end
 
   # This method iterates over the graph to optimze the modularity. Iterations
@@ -71,7 +78,7 @@ module Louvian
 
         neighbour_communities = @@graph.get_neighbour_comms node
 
-        #puts "\tneihbours#{neighbour_communities.map {|i| i.id}}"
+        #puts "\tneihbours#{neighbour_communities.map {|i| i.id}} origin #{orig_community.id}"
         @@graph.remove_node node, orig_community
 
 
@@ -89,6 +96,7 @@ module Louvian
         if best_community != orig_community
           nb_moves += 1
           improvement = true
+          #puts "\t\tbest comm #{best_community.id}"
         end
 
         @@graph.insert_node node, best_community
@@ -96,7 +104,6 @@ module Louvian
         @@graph.garbage_collect orig_community
 
       end
-      #display_communities
       new_mod = @@graph.modularity
       #puts "modularity was #{cur_mod} and now #{new_mod}, moves #{nb_moves}"
     end while  nb_moves > 0 and new_mod - cur_mod >= MIN_INCREASE
@@ -105,20 +112,26 @@ module Louvian
 
 
   def self.example
-    s='0 1
-    0 8
-    1 3
-    1 4
-    1 8
-    2 3
-    2 5
-    2 7
-    3 8
-    5 6
-    5 7'
+    s='0 1 1
+    0 8 1
+    1 3 1
+    1 4 1
+    1 8 1
+    2 3 1
+    2 5 1
+    2 7 1
+    3 8 1
+    4 7 1
+    5 6 1
+    5 7 1'
 
     Louvian.init_env s, false
-    Louvian.run
+    Louvian.one_level
+    ng = Louvian.graph.build_graph_from_comms
+    Louvian.levels << Louvian.graph
+    Louvian.graph = ng
+    #L = Louvian
+    #Louvian.run
     nil
   end
 end
