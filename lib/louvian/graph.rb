@@ -136,7 +136,6 @@ class Louvian::Graph
   end
 
   def build_graph_from_comms
-
     comm_edges = []
 
     count = @communities.count
@@ -159,16 +158,18 @@ class Louvian::Graph
 
   def expand! lower_graph
     comm_2_nodes = lower_graph.communities.inject({}) {|r,comm| r[comm.id]= comm.nodes_ids;r}
+    new_graph_nodes = []
     @communities.each do |comm|
-      new_nodes = []
+      new_comm_nodes = []
       comm.nodes_ids.each do |node|
-        new_nodes += comm_2_nodes[node]
+        new_comm_nodes += comm_2_nodes[node]
         comm_2_nodes[node].each do |low_node|
           @n2c[low_node] = comm.id
         end
       end
-      comm.nodes_ids = new_nodes
+      comm.nodes_ids = new_comm_nodes
+      new_graph_nodes += new_comm_nodes 
     end
-
+    @nodes = new_graph_nodes
   end
 end

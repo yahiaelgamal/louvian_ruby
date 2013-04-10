@@ -9,13 +9,17 @@ module Louvian
     @@graph
   end
 
+  def self.graph= value
+    @@graph = value
+  end
+
   def self.levels
     @@levels
   end
   # This method sets up the whole environemnt for calculations
   #
   # @param string [String] in the form of src dest (one edge per line)
-  def self.init_env string, directed=false
+  def self.init_env string, directed
     list = string.split("\n").map {|line| line.split.map{|n| n.to_i}}
     @@graph = Graph.new list, directed, 0
     @@levels = [] # List of Graphs
@@ -34,9 +38,16 @@ module Louvian
   end
 
   def self.unfold_levels!
-    levels[(2..-1)].each_with_index do |graph, i|
-      graph.expand! levels[i-1]
+    @@levels[(1..-1)].each_with_index do |graph, i|
+      graph.expand! @@levels[i]
     end
+  end
+
+  def self.display_hierarchy
+    @@levels.each do |graph|
+      puts "level #{graph.level}: Nodes #{graph.communities.count}"
+    end
+
   end
 
   # This method iterates over the graph to optimze the modularity. Iterations
