@@ -9,9 +9,9 @@ class Louvian
   #
   # @param string [String] in the form of src dest (one edge per line)
   #
-  def initialize string, directed
-    list = string.split("\n").map {|line| line.split.map{|n| n.to_i}}
-    @graph = Graph.new list, directed, 0
+  def initialize tuples, directed
+    #list = string.split("\n").map {|line| line.split.map{|n| n.to_i}}
+    @graph = Graph.new tuples, directed, 0
     @levels = [] # List of Graphs
   end
 
@@ -31,13 +31,13 @@ class Louvian
     @levels = value
   end
 
-  def run
+  def run verbose=false
     l = 0
-    puts "Level #{l}: Comms #{@graph.communities.size}"
+    puts "Level #{l}: Comms #{@graph.communities.size}" if verbose
     l +=1
 
     while self.one_level
-      puts "Level #{l}: Comms #{@graph.communities.size}"
+      puts "Level #{l}: Comms #{@graph.communities.size}" if verbose
       @levels << @graph
       @graph = @graph.build_graph_from_comms
 
@@ -47,6 +47,7 @@ class Louvian
   end
 
   def unfold_levels!
+    return false if @levels.size < 2
     @levels[(1..-1)].each_with_index do |graph, i|
       graph.expand! @levels[i]
     end
@@ -113,9 +114,8 @@ class Louvian
     return improvement
   end
 
-
-  def self.example
-    s='0 1 1
+  def self.example s=nil
+    s ||='0 1 1
     0 8 1
     1 3 1
     1 4 1
@@ -127,8 +127,9 @@ class Louvian
     4 7 1
     5 6 1
     5 7 1'
+    list = self.make_list_from_string s
 
-    l = Louvian.new s, false
+    l = Louvian.new(list, false)
     #l.one_level
     #ng = l.graph.build_graph_from_comms
     #l.levels << l.graph
@@ -136,4 +137,9 @@ class Louvian
     l.run
     return l
   end
+
+  def self.make_list_from_string s
+    list = (s.split("\n").map {|line| line.split.map{|n| n.to_i}})
+  end
+
 end
