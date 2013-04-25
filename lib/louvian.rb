@@ -9,10 +9,10 @@ class Louvian
   #
   # @param string [String] in the form of src dest (one edge per line)
   #
-  def initialize tuples, directed
-    #list = string.split("\n").map {|line| line.split.map{|n| n.to_i}}
+  def initialize tuples, directed, save_intermediate=true
     @graph = Graph.new tuples, directed, 0
     @levels = [] # List of Graphs
+    @save_intermediate_graphs = save_intermediate
   end
 
   def graph
@@ -27,10 +27,6 @@ class Louvian
     @levels
   end
 
-  def levels= value
-    @levels = value
-  end
-
   def run verbose=false
     l = 0
     puts "Level #{l}: Comms #{@graph.communities.size}" if verbose
@@ -38,7 +34,7 @@ class Louvian
 
     while self.one_level
       puts "Level #{l}: Comms #{@graph.communities.size}" if verbose
-      @levels << @graph
+      @levels << @graph if @save_intermediate_graphs
       @graph = @graph.build_graph_from_comms
 
       l+=1
@@ -55,8 +51,14 @@ class Louvian
   end
 
   def display_hierarchy
-    @levels.each do |graph|
-      puts "level #{graph.level}: Nodes #{graph.communities.count}"
+    if not @save_intermediate
+      puts "level #{@graph.level}: Nodes #{graph.communities.count}"
+      puts "Note, save_intermediate is set to be false, set it to true"+
+        "if you want to make use of hierarchy"
+    else
+      @levels.each do |graph|
+        puts "level #{graph.level}: Nodes #{graph.communities.count}"
+      end
     end
     nil
   end
@@ -70,19 +72,14 @@ class Louvian
     cur_mod = @graph.modularity
     new_mod = cur_mod
     begin
-      #puts "Iterating"
-      #puts "modularity is #{@graph.modularity}"
       cur_mod = new_mod
       nb_moves = 0
       nb_passes += 1
       @graph.nodes.shuffle.each do |node|
-        #puts "\t#{@graph.n2c}"
-        #puts "\tconsidering node #{node}"
         orig_community = @graph.get_community node
 
         neighbour_communities = @graph.get_neighbour_comms node
 
-        #puts "\tneihbours#{neighbour_communities.map {|i| i.id}} origin #{orig_community.id}"
         @graph.remove_node node, orig_community
 
 
@@ -91,7 +88,6 @@ class Louvian
 
         neighbour_communities.each do |comm|
           mod_gain = @graph.modularity_gain node, comm
-          #puts "\t\tfor comm #{comm.id} mod increase is #{mod_gain}"
           if mod_gain > max_gain
             max_gain = mod_gain
             best_community = comm
@@ -100,7 +96,6 @@ class Louvian
         if best_community != orig_community
           nb_moves += 1
           improvement = true
-          #puts "\t\tbest comm #{best_community.id}"
         end
 
         @graph.insert_node node, best_community
@@ -109,7 +104,6 @@ class Louvian
 
       end
       new_mod = @graph.modularity
-      #puts "modularity was #{cur_mod} and now #{new_mod}, moves #{nb_moves}"
     end while  nb_moves > 0 and new_mod - cur_mod >= MIN_INCREASE
     return improvement
   end
@@ -130,10 +124,6 @@ class Louvian
     list = self.make_list_from_string s
 
     l = Louvian.new(list, false)
-    #l.one_level
-    #ng = l.graph.build_graph_from_comms
-    #l.levels << l.graph
-    #l.graph = ng
     l.run
     return l
   end

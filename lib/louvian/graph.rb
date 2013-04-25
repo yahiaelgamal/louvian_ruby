@@ -26,7 +26,6 @@ class Louvian::Graph
     end
 
     # Sum of all links half edges (double the number of edges)
-    #@total_weight = @adj_list.inject(0) {|r,(k,v)| r+v.count}
     @total_weight = 0
     @adj_list.each do |node, links|
       @total_weight += links.values.inject(0, :+)
@@ -113,10 +112,6 @@ class Louvian::Graph
     deg = @adj_list[node].values.inject(0,:+)
     m2 = @total_weight
 
-    #puts "\t\t\tcomm #{community.id} #{[tot, deg, m2, nb_links_to_comm]}"
-    # what makes sense
-    #return (nb_links_to_comm.to_f/m2) - (tot * deg.to_f/m2**2/2)
-
     # copied from the cpp code
     return nb_links_to_comm.to_f - tot*deg.to_f/m2
   end
@@ -161,7 +156,6 @@ class Louvian::Graph
       comm.nodes_ids.each do |node|
         @adj_list[node].each do |linked_node, weight|
           if not comm.nodes_ids.include? linked_node
-            #comm_edges << [comm.id, @n2c[linked_node]] * weight
             comm_edges << [comm.id, @n2c[linked_node], weight]
           end
         end
