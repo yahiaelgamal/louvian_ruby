@@ -22,24 +22,26 @@ Usage
     Louvian.example
 or 
 
-    edges='0 1
-    0 8
-    1 3
-    1 4
-    1 8
-    2 3
-    2 5
-    2 7
-    3 8
-    5 6
-    5 7'
-    
-    directed_graph = false
-    Louvian.init_env edges, directed_graph 
-    Louvian.run
-    # After run, the Louvian.levels array will have a graph for each leve
+    # source target weight
+    edges ='0 1 1
+    0 8 1
+    1 3 1
+    1 4 1
+    1 8 1
+    2 3 1
+    2 5 1
+    2 7 1
+    3 8 1
+    4 7 1
+    5 6 1
+    5 7 1'
+    edges_list = self.make_list_from_string(edges)
+
+    l = Louvian.new(edges_list, false)
+    l.run
+    # After run, the louv.levels array will have a graph for each leve
     # You can use graph.display_communities for a user friendly output
-    Louvian.levels.last.display_communities
+    l.display_hierarchy
     
 
 
