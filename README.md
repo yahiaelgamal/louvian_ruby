@@ -39,7 +39,7 @@ or
 
     l = Louvian.new(edges_list, false)
     l.run
-    # After run, the louv.levels array will have a graph for each leve
+    # After run, the l.levels array will have a graph for each level
     # You can use graph.display_communities for a user friendly output
     l.display_hierarchy
     
